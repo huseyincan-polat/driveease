@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DriveEase — Car Rental Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07070f;--surface:#0f0f1a;--surface2:#161625;--surface3:#1d1d30;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --accent:#7c6dff;--accent-glow:rgba(124,109,255,0.25);
+  --green:#3ecf8e;--green-glow:rgba(62,207,142,0.2);
+  --red:#ff5470;--red-glow:rgba(255,84,112,0.2);
+  --yellow:#ffb547;--blue:#38bdf8;--purple:#c084fc;--orange:#fb923c;
+  --text:#e2e2f0;--muted:#5c5c7a;--muted2:#8888aa;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ── AUTH OVERLAY ────────────────────────────────────────── */
+#authOverlay{
+  position:fixed;inset:0;z-index:1000;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%,rgba(124,109,255,0.15),transparent),
+    radial-gradient(ellipse 40% 40% at 80% 80%,rgba(62,207,142,0.07),transparent);
+}
+.auth-card{
+  width:420px;
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:20px;
+  padding:36px 40px;
+  box-shadow:0 40px 80px rgba(0,0,0,0.6),0 0 0 1px var(--border);
+}
+.auth-logo{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;
+  text-align:center;margin-bottom:6px;
+  background:linear-gradient(135deg,#7c6dff,#a78bfa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.auth-logo span{-webkit-text-fill-color:var(--red);color:var(--red)}
+.auth-sub{text-align:center;color:var(--muted2);font-size:0.82rem;margin-bottom:28px}
+.auth-tabs{display:flex;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:24px;gap:4px}
+.auth-tab{
+  flex:1;padding:9px;border:none;border-radius:7px;
+  background:transparent;color:var(--muted2);
+  font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:500;
+  cursor:pointer;transition:all 0.2s;
+}
+.auth-tab.active{background:var(--accent);color:#fff;box-shadow:0 4px 14px var(--accent-glow)}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:var(--muted2);margin-bottom:6px}
+.field input{
+  width:100%;padding:11px 14px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;
+  outline:none;transition:all 0.2s;
+}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.field input.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-glow)}
+.field-err{font-size:0.74rem;color:var(--red);margin-top:4px;min-height:14px}
+.btn-auth{
+  width:100%;padding:12px;margin-top:6px;
+  background:linear-gradient(135deg,#7c6dff,#9b8cff);
+  border:none;border-radius:10px;color:#fff;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:0.92rem;
+  cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;
+}
+.btn-auth:hover{transform:translateY(-1px);box-shadow:0 8px 24px var(--accent-glow)}
+.auth-err{
+  background:rgba(255,84,112,0.1);border:1px solid rgba(255,84,112,0.3);
+  border-radius:8px;padding:10px 14px;font-size:0.82rem;color:var(--red);
+  margin-top:12px;display:none;
+}
+.auth-err.show{display:block}
+
+/* ── APP SHELL ───────────────────────────────────────────── */
+#app{display:none}
+header{
+  position:sticky;top:0;z-index:50;height:60px;
+  background:rgba(7,7,15,0.85);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:14px;padding:0 28px;
+}
+.hdr-logo{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;
+  background:linear-gradient(135deg,#7c6dff,#a78bfa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  white-space:nowrap;
+}
+.hdr-logo span{-webkit-text-fill-color:var(--red);color:var(--red)}
+.hdr-badge{
+  padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;
+  border:1px solid;letter-spacing:0.4px;
+}
+.badge-admin{background:rgba(124,109,255,0.12);border-color:rgba(124,109,255,0.3);color:var(--accent)}
+.badge-customer{background:rgba(62,207,142,0.1);border-color:rgba(62,207,142,0.3);color:var(--green)}
+.hdr-user{margin-left:6px;font-size:0.83rem;color:var(--muted2)}
+.hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.hdr-link{
+  padding:6px 14px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;color:var(--muted2);font-size:0.8rem;
+  cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;
+  transition:all 0.2s;font-family:'DM Sans',sans-serif;
+}
+.hdr-link:hover{color:var(--text);border-color:var(--accent)}
+.btn-logout{
+  padding:6px 14px;border-radius:8px;border:1px solid rgba(255,84,112,0.3);
+  background:rgba(255,84,112,0.08);color:var(--red);font-size:0.8rem;
+  cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;
+}
+.btn-logout:hover{background:rgba(255,84,112,0.15)}
+.layout{display:grid;grid-template-columns:360px 1fr;min-height:calc(100vh - 60px)}
+
+/* ── SIDEBAR ─────────────────────────────────────────────── */
+.sidebar{
+  background:var(--surface);border-right:1px solid var(--border);
+  padding:24px 20px;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;
+}
+.section-label{
+  font-size:0.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:16px;
+}
+.sfield{margin-bottom:12px}
+.sfield label{display:block;font-size:0.72rem;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted2);margin-bottom:5px}
+.sfield input,.sfield select{
+  width:100%;padding:9px 12px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:9px;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.87rem;
+  outline:none;transition:all 0.2s;
+}
+.sfield select option{background:var(--surface2)}
+.sfield input:focus,.sfield select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.sfield input.err{border-color:var(--red)}
+.sfield-err{font-size:0.72rem;color:var(--red);margin-top:3px;min-height:14px}
+.srow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-primary{
+  width:100%;padding:11px;margin-top:8px;
+  background:linear-gradient(135deg,#7c6dff,#9b8cff);
+  border:none;border-radius:9px;color:#fff;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:0.87rem;
+  cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:7px;
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px var(--accent-glow)}
+.btn-ghost{
+  width:100%;padding:9px;margin-top:6px;
+  background:transparent;border:1px solid var(--border);border-radius:9px;
+  color:var(--muted2);font-family:'DM Sans',sans-serif;font-size:0.84rem;
+  cursor:pointer;transition:all 0.2s;display:none;
+}
+.btn-ghost:hover{color:var(--text);border-color:var(--muted2)}
+.btn-ghost.show{display:block}
+.edit-banner{
+  background:rgba(255,181,71,0.08);border:1px solid rgba(255,181,71,0.25);
+  border-radius:9px;padding:9px 13px;font-size:0.78rem;color:var(--yellow);
+  display:none;align-items:center;gap:8px;margin-bottom:13px;
+}
+.edit-banner.show{display:flex}
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-box{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:12px;
+}
+.stat-box .val{font-family:'Syne',sans-serif;font-weight:800;font-size:1.45rem}
+.stat-box .lbl{font-size:0.68rem;color:var(--muted2);margin-top:2px}
+
+/* ── MAIN ────────────────────────────────────────────────── */
+.main{padding:24px 28px}
+.main-bar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.main-bar h2{font-family:'Syne',sans-serif;font-weight:700;font-size:1.2rem}
+.count-pill{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:20px;padding:3px 12px;font-size:0.75rem;color:var(--muted2);
+}
+.search-box{
+  margin-left:auto;position:relative;
+}
+.search-box svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.search-box input{
+  background:var(--surface);border:1px solid var(--border);border-radius:9px;
+  padding:8px 12px 8px 34px;color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:0.85rem;width:220px;outline:none;transition:all 0.2s;
+}
+.search-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+
+/* Filter bar (customer) */
+.filter-bar{
+  display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;
+}
+.filter-bar select{
+  padding:7px 12px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;
+  outline:none;cursor:pointer;transition:all 0.2s;
+}
+.filter-bar select:focus{border-color:var(--accent)}
+.filter-bar select option{background:var(--surface2)}
+.btn-filter-reset{
+  padding:7px 14px;background:transparent;border:1px solid var(--border);
+  border-radius:8px;color:var(--muted2);font-size:0.8rem;cursor:pointer;transition:all 0.2s;
+  font-family:'DM Sans',sans-serif;
+}
+.btn-filter-reset:hover{color:var(--text);border-color:var(--muted2)}
+
+/* Table */
+.table-wrap{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;
+}
+table{width:100%;border-collapse:collapse}
+thead th{
+  padding:12px 16px;text-align:left;
+  font-size:0.67rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border);
+}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(124,109,255,0.04)}
+td{padding:13px 16px;font-size:0.85rem;vertical-align:middle}
+.td-id{color:var(--muted);font-size:0.75rem;font-family:monospace}
+.td-actions{display:flex;gap:6px}
+.empty-state{text-align:center;padding:52px 20px}
+.empty-state .ei{font-size:2.5rem;margin-bottom:10px;opacity:0.3}
+.empty-state p{color:var(--muted2);font-size:0.87rem}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:0.72rem;font-weight:600;border:1px solid}
+.b-gas  {background:rgba(251,146,60,0.1); border-color:rgba(251,146,60,0.3); color:var(--orange)}
+.b-die  {background:rgba(100,116,139,0.1);border-color:rgba(100,116,139,0.3);color:#94a3b8}
+.b-ele  {background:rgba(62,207,142,0.1); border-color:rgba(62,207,142,0.3); color:var(--green)}
+.b-hyb  {background:rgba(56,189,248,0.1); border-color:rgba(56,189,248,0.3); color:var(--blue)}
+.b-avail{background:rgba(62,207,142,0.1); border-color:rgba(62,207,142,0.3); color:var(--green)}
+.b-rent {background:rgba(255,84,112,0.1); border-color:rgba(255,84,112,0.3); color:var(--red)}
+.b-ist  {background:rgba(124,109,255,0.1);border-color:rgba(124,109,255,0.3);color:var(--accent)}
+.b-ank  {background:rgba(192,132,252,0.1);border-color:rgba(192,132,252,0.3);color:var(--purple)}
+.b-cat  {background:rgba(56,189,248,0.08);border-color:rgba(56,189,248,0.2); color:var(--blue)}
+
+/* Action buttons */
+.btn-edit,.btn-del,.btn-rent{
+  padding:5px 11px;border-radius:7px;border:1px solid;
+  font-size:0.76rem;font-weight:500;cursor:pointer;transition:all 0.15s;
+  font-family:'DM Sans',sans-serif;
+}
+.btn-edit{background:rgba(255,181,71,0.08);border-color:rgba(255,181,71,0.25);color:var(--yellow)}
+.btn-edit:hover{background:rgba(255,181,71,0.16);transform:translateY(-1px)}
+.btn-del {background:rgba(255,84,112,0.08);border-color:rgba(255,84,112,0.25);color:var(--red)}
+.btn-del:hover{background:rgba(255,84,112,0.16);transform:translateY(-1px)}
+.btn-rent{background:rgba(62,207,142,0.08);border-color:rgba(62,207,142,0.25);color:var(--green)}
+.btn-rent:hover{background:rgba(62,207,142,0.16);transform:translateY(-1px)}
+.btn-rent:disabled{opacity:0.35;cursor:not-allowed;transform:none}
+
+/* ── RENTAL MODAL ────────────────────────────────────────── */
+#rentalModal{
+  position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;
+}
+#rentalModal.show{display:flex}
+.modal-card{
+  width:480px;background:var(--surface);border:1px solid var(--border2);
+  border-radius:18px;padding:32px 36px;
+  box-shadow:0 40px 80px rgba(0,0,0,0.5);
+}
+.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:4px}
+.modal-sub{color:var(--muted2);font-size:0.8rem;margin-bottom:22px}
+.price-preview{
+  background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;
+}
+.price-preview .lbl{font-size:0.78rem;color:var(--muted2)}
+.price-preview .val{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--green)}
+.modal-actions{display:flex;gap:10px;margin-top:6px}
+.btn-confirm{
+  flex:1;padding:11px;background:linear-gradient(135deg,var(--green),#2ebd78);
+  border:none;border-radius:9px;color:#fff;font-family:'Syne',sans-serif;
+  font-weight:700;font-size:0.87rem;cursor:pointer;transition:all 0.2s;
+}
+.btn-confirm:hover{transform:translateY(-1px);box-shadow:0 6px 20px var(--green-glow)}
+.btn-modal-cancel{
+  padding:11px 20px;background:transparent;border:1px solid var(--border);
+  border-radius:9px;color:var(--muted2);cursor:pointer;font-family:'DM Sans',sans-serif;
+  font-size:0.85rem;transition:all 0.2s;
+}
+.btn-modal-cancel:hover{color:var(--text)}
+
+/* ── TOAST ───────────────────────────────────────────────── */
+#toast{
+  position:fixed;bottom:24px;right:24px;z-index:999;
+  background:var(--surface2);border:1px solid var(--green);
+  color:var(--text);padding:13px 18px;border-radius:12px;font-size:0.85rem;
+  display:flex;align-items:center;gap:9px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  transform:translateY(70px);opacity:0;
+  transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);max-width:320px;
+}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.terror{border-color:var(--red)}
+#toast .ticon{font-size:1rem}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ AUTH OVERLAY ══════════════ -->
+<div id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-logo">Drive<span>Ease</span></div>
+    <p class="auth-sub">Car Rental Management System</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Login</button>
+      <button class="auth-tab"        onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- Login -->
+    <div id="loginForm">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="admin@driveease.com">
+        <div class="field-err" id="le-email"></div>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="••••••••">
+        <div class="field-err" id="le-pass"></div>
+      </div>
+      <button class="btn-auth" onclick="doLogin()">Sign In</button>
+      <div class="auth-err" id="loginErr"></div>
+    </div>
+
+    <!-- Register -->
+    <div id="registerForm" style="display:none">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="regName" >
+        <div class="field-err" id="re-name"></div>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="regEmail" >
+        <div class="field-err" id="re-email"></div>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="regPass" placeholder="Min. 6 characters">
+        <div class="field-err" id="re-pass"></div>
+      </div>
+      <button class="btn-auth" onclick="doRegister()">Create Account</button>
+      <div class="auth-err" id="registerErr"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="app">
+  <header>
+    <div class="hdr-logo">Drive<span>Ease</span></div>
+    <span class="hdr-badge" id="roleBadge"></span>
+    <span class="hdr-user" id="hdrUser"></span>
+    <div class="hdr-right">
+      <a href="/api-docs" target="_blank" class="hdr-link">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Swagger
+      </a>
+      <button class="btn-logout" onclick="logout()">Log Out</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <!-- ADMIN: Add/Edit Car Form -->
+      <div id="adminPanel">
+        <p class="section-label" id="formLabel">Add New Vehicle</p>
+        <div class="edit-banner" id="editBanner">
+          <span>✏️</span><span id="editBannerText">Editing vehicle</span>
+        </div>
+        <input type="hidden" id="editId">
+
+        <div class="srow">
+          <div class="sfield">
+            <label>Brand</label>
+            <input type="text" id="fBrand" placeholder="Toyota">
+            <div class="sfield-err" id="fe-brand"></div>
+          </div>
+          <div class="sfield">
+            <label>Model</label>
+            <input type="text" id="fModel" placeholder="Corolla">
+            <div class="sfield-err" id="fe-model"></div>
+          </div>
+        </div>
+        <div class="srow">
+          <div class="sfield">
+            <label>Year</label>
+            <input type="number" id="fYear" placeholder="2022" min="1900" max="2026">
+            <div class="sfield-err" id="fe-year"></div>
+          </div>
+          <div class="sfield">
+            <label>Price / Day ($)</label>
+            <input type="number" id="fPrice" placeholder="150" min="1">
+            <div class="sfield-err" id="fe-price"></div>
+          </div>
+        </div>
+        <div class="srow">
+          <div class="sfield">
+            <label>KM</label>
+            <input type="number" id="fKm" placeholder="15000" min="0">
+            <div class="sfield-err" id="fe-km"></div>
+          </div>
+          <div class="sfield">
+            <label>Fuel Type</label>
+            <select id="fFuel">
+              <option value="">Select...</option>
+              <option>Gasoline</option>
+              <option>Diesel</option>
+              <option>Electric</option>
+              <option>Hybrid</option>
+            </select>
+            <div class="sfield-err" id="fe-fuel"></div>
+          </div>
+        </div>
+        <div class="form-group">
+    <label><i class="fa-solid fa-signal"></i> Status</label>
+    <select id="fStatus" class="form-control">
+        <option value="available">Available</option>
+        <option value="rented">Rented</option>
+    </select>
+</div>
+        <div class="sfield">
+          <label>Branch</label>
+          <select id="fBranch"><option value="">Loading...</option></select>
+          <div class="sfield-err" id="fe-branch"></div>
+        </div>
+        <div class="sfield">
+          <label>Category</label>
+          <select id="fCategory"><option value="">Loading...</option></select>
+          <div class="sfield-err" id="fe-category"></div>
+        </div>
+
+        <button class="btn-primary" onclick="submitCar()">
+          <span id="submitIcon">＋</span>
+          <span id="submitText">Add Vehicle</span>
+        </button>
+        <button class="btn-ghost" id="cancelEditBtn" onclick="resetForm()">Cancel Edit</button>
+
+        <div class="divider"></div>
+        <p class="section-label">Fleet Statistics</p>
+        <div class="stats-grid">
+          <div class="stat-box"><div class="val" id="stTotal">—</div><div class="lbl">Total Vehicles</div></div>
+          <div class="stat-box"><div class="val" id="stAvail">—</div><div class="lbl">Available</div></div>
+          <div class="stat-box" style="border-color: var(--green-glow);">
+          <div class="val" id="stRevenue" style="color: var(--green);">$0</div><div class="lbl">Total Revenue</div></div>
+          <div class="stat-box"><div class="val" id="stRented">—</div><div class="lbl">Rented</div></div>
+        </div>
+      </div>
+
+      <!-- CUSTOMER: Filters -->
+      <div id="customerPanel" style="display:none">
+        <p class="section-label">Filter Vehicles</p>
+        <div class="sfield">
+          <label>Fuel Type</label>
+          <select id="cfFuel" onchange="applyFilters()">
+            <option value="">All Fuel Types</option>
+            <option>Gasoline</option>
+            <option>Diesel</option>
+            <option>Electric</option>
+            <option>Hybrid</option>
+          </select>
+        </div>
+        <div class="sfield">
+          <label>Branch</label>
+          <select id="cfBranch" onchange="applyFilters()">
+            <option value="">All Branches</option>
+          </select>
+        </div>
+        <div class="sfield">
+          <label>Category</label>
+          <select id="cfCategory" onchange="applyFilters()">
+            <option value="">All Categories</option>
+          </select>
+        </div>
+        <div class="sfield">
+          <label>Status</label>
+          <select id="cfStatus" onchange="applyFilters()">
+            <option value="">All</option>
+            <option value="available">Available Only</option>
+          </select>
+        </div>
+        <div class="sfield">
+          <label>Sort By</label>
+          <select id="cfSort" onchange="applyFilters()">
+            <option value="">Default</option>
+            <option value="price_asc">Price: Low → High</option>
+            <option value="price_desc">Price: High → Low</option>
+            <option value="km_asc">KM: Low → High</option>
+            <option value="km_desc">KM: High → Low</option>
+            <option value="year_desc">Newest First</option>
+            <option value="year_asc">Oldest First</option>
+          </select>
+        </div>
+        <button class="btn-ghost show" onclick="resetFilters()">Reset Filters</button>
+
+        <div class="divider"></div>
+        <p class="section-label">My Rentals</p>
+        <div id="myRentalsList" style="font-size:0.8rem;color:var(--muted2)">Loading...</div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="main-bar">
+        <h2>Vehicle Fleet</h2>
+        <span class="count-pill" id="carCount">0 vehicles</span>
+        <div class="search-box" style="margin-left:auto">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="searchInput" placeholder="Search brand or model..." oninput="onSearch()">
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Brand</th><th>Model</th><th>Year</th>
+              <th>Fuel</th><th>KM</th><th>Category</th>
+              <th>Branch</th><th>Status</th><th>Price/Day</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="carBody">
+            <tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">
+              <span class="spinner"></span> Loading vehicles...
+            </td></tr>
+          </tbody>
+        </table>
+        <div class="empty-state" id="emptyState" style="display:none">
+          <div class="ei">🚗</div>
+          <p>No vehicles found.</p>
+          <p style="margin-top:6px;font-size:0.78rem">Try adjusting your filters.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══════════════ RENTAL MODAL ══════════════ -->
+<div id="rentalModal">
+  <div class="modal-card">
+    <div class="modal-title">Confirm Rental</div>
+    <div class="modal-sub" id="modalCarInfo">Toyota Corolla 2022</div>
+    <div class="sfield">
+      <label>Pickup Branch</label>
+      <select id="mPickup"></select>
+    </div>
+    <div class="sfield">
+      <label>Return Branch</label>
+      <select id="mReturn"></select>
+    </div>
+    <div class="srow">
+      <div class="sfield">
+        <label>Start Date</label>
+        <input type="date" id="mStart">
+        <div class="sfield-err" id="me-start"></div>
+      </div>
+      <div class="sfield">
+        <label>End Date</label>
+        <input type="date" id="mEnd">
+        <div class="sfield-err" id="me-end"></div>
+      </div>
+    </div>
+    <div class="price-preview">
+      <div><div class="lbl">Estimated Total</div><div class="lbl" id="daysLabel">Select dates</div></div>
+      <div class="val" id="pricePreview">—</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeRentalModal()">Cancel</button>
+      <button class="btn-confirm" onclick="confirmRental()">Confirm Rental</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TOAST ══════════════ -->
+<div id="toast">
+  <span class="ticon" id="ticon">✓</span>
+  <span id="tmsg"></span>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────
+let TOKEN = null, USER = null, BRANCHES = [], CATEGORIES = [], RENTAL_CAR = null;
+let searchTimer, currentFilters = {};
+
+// ─── Auth Tab ────────────────────────────────────────────────
+function switchTab(t) {
+    document.getElementById('loginForm').style.display    = t === 'login'    ? 'block' : 'none';
+    document.getElementById('registerForm').style.display = t === 'register' ? 'block' : 'none';
+    document.querySelectorAll('.auth-tab').forEach((b,i) => b.classList.toggle('active', (i===0)===(t==='login')));
+}
+
+// ─── Login ───────────────────────────────────────────────────
+async function doLogin() {
+    clearAuthErr();
+    const email = v('loginEmail'), pass = v('loginPass');
+    let ok = true;
+    if (!email) { setFE('le-email','loginEmail','Email is required'); ok=false; }
+    if (!pass)  { setFE('le-pass', 'loginPass', 'Password is required'); ok=false; }
+    if (!ok) return;
+
+    try {
+        const res  = await fetch('/api/users/login',{method:'POST',headers:h(),body:JSON.stringify({email,password:pass})});
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        TOKEN = data.token; USER = data.user;
+        bootApp();
+    } catch(e) { showAuthErr('loginErr', e.message); }
+}
+
+// ─── Register ────────────────────────────────────────────────
+async function doRegister() {
+    clearAuthErr();
+    const name=v('regName'),email=v('regEmail'),pass=v('regPass');
+    let ok=true;
+    if (!name)  { setFE('re-name','regName','Name is required'); ok=false; }
+    if (!email) { setFE('re-email','regEmail','Email is required'); ok=false; }
+    if (!pass || pass.length<6) { setFE('re-pass','regPass','Min. 6 characters'); ok=false; }
+    if (!ok) return;
+
+    try {
+        const res  = await fetch('/api/users/register',{method:'POST',headers:h(),body:JSON.stringify({name,email,password:pass,role:'customer'})});
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        toast('Account created! Please login.');
+        switchTab('login');
+    } catch(e) { showAuthErr('registerErr', e.message); }
+}
+
+function showAuthErr(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg; el.classList.add('show');
+}
+function clearAuthErr() {
+    ['loginErr','registerErr'].forEach(id=>{ const el=document.getElementById(id); el.textContent=''; el.classList.remove('show'); });
+    ['le-email','le-pass','re-name','re-email','re-pass'].forEach(id=>document.getElementById(id).textContent='');
+    ['loginEmail','loginPass','regName','regEmail','regPass'].forEach(id=>document.getElementById(id).classList.remove('err'));
+}
+
+// ─── Boot App ────────────────────────────────────────────────
+async function bootApp() {
+    document.getElementById('authOverlay').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('hdrUser').textContent  = USER.name;
+    const badge = document.getElementById('roleBadge');
+    badge.textContent = USER.role.toUpperCase();
+    badge.className   = 'hdr-badge ' + (USER.role==='admin' ? 'badge-admin' : 'badge-customer');
+
+    [BRANCHES, CATEGORIES] = await Promise.all([
+        api('/api/branches'), api('/api/categories')
+    ]);
+
+    if (USER.role === 'admin') {
+        document.getElementById('adminPanel').style.display    = 'block';
+        document.getElementById('customerPanel').style.display = 'none';
+        populateSelect('fBranch', BRANCHES, 'id', 'name');
+        populateSelect('fCategory', CATEGORIES, 'id', 'category_name');
+    } else {
+        document.getElementById('adminPanel').style.display    = 'none';
+        document.getElementById('customerPanel').style.display = 'block';
+        populateSelect('cfBranch',   BRANCHES,   'id','name',   true);
+        populateSelect('cfCategory', CATEGORIES, 'id','category_name', true);
+        loadMyRentals();
+    }
+
+    populateModalBranches();
+    loadCars();
+}
+
+function logout() {
+    TOKEN=null; USER=null; BRANCHES=[]; CATEGORIES=[]; RENTAL_CAR=null;
+    document.getElementById('authOverlay').style.display='flex';
+    document.getElementById('app').style.display='none';
+    resetForm(); clearAuthErr();
+}
+
+// ─── Cars: load + render ──────────────────────────────────────
+async function loadCars(params={}) {
+    const qs = new URLSearchParams(params).toString();
+    // HÜNKARIM: api fonksiyonunun sonuna 'true' ekledik, böylece filtreler token ile güvenli şekilde backend'e taşınacak
+    const cars = await api('/api/cars' + (qs ? '?' + qs : ''), true); 
+    renderCars(cars);
+    updateStats(cars);
+}
+
+function renderCars(cars) {
+    const tbody = document.getElementById('carBody');
+    const empty = document.getElementById('emptyState');
+    document.getElementById('carCount').textContent = `${cars.length} vehicle${cars.length!==1?'s':''}`;
+
+    if (!cars.length) {
+        tbody.innerHTML=''; empty.style.display='block'; return;
+    }
+    empty.style.display='none';
+    tbody.innerHTML = cars.map(c=>`
+        <tr>
+          <td class="td-id">#${c.id}</td>
+          <td><strong>${esc(c.brand)}</strong></td>
+          <td>${esc(c.model)}</td>
+          <td>${c.year}</td>
+          <td>${fuelBadge(c.fuel_type)}</td>
+          <td>${Number(c.km).toLocaleString()} km</td>
+          <td><span class="badge b-cat">${esc(c.category_name || 'General')}</span></td>
+          <td>${branchBadge(c.branch_city || c.city || 'Center', c.branch_name || c.name)}</td>
+          <td>${statusBadge(c.status)}</td>
+          <td style="font-family:'Syne',sans-serif;font-weight:700;color:var(--green)">
+            $${Number(c.price_per_day).toLocaleString('en-US')}
+          </td>
+          <td class="td-actions">${actionsHTML(c)}</td>
+        </tr>
+    `).join('');
+}
+
+function actionsHTML(c) {
+    if (USER.role === 'admin') {
+        return `
+          <button class="btn-edit" onclick="startEdit(${c.id})">Edit</button>
+          <button class="btn-del"  onclick="deleteCar(${c.id})">Delete</button>
+        `;
+    }
+    const dis = c.status==='rented' ? 'disabled title="Not available"' : '';
+    return `<button class="btn-rent" ${dis} onclick="openRentalModal(${c.id},'${esc(c.brand)} ${esc(c.model)} ${c.year}',${c.price_per_day})">Rent</button>`;
+}
+
+// ─── Badges ──────────────────────────────────────────────────
+function fuelBadge(ft) {
+    const map={Gasoline:'b-gas',Diesel:'b-die',Electric:'b-ele',Hybrid:'b-hyb'};
+    const icons={Gasoline:'⛽',Diesel:'🔩',Electric:'⚡',Hybrid:'🌿'};
+    return `<span class="badge ${map[ft]||''}">${icons[ft]||''} ${ft}</span>`;
+}
+function statusBadge(s) {
+    return s==='available'
+        ? `<span class="badge b-avail">● Available</span>`
+        : `<span class="badge b-rent">● Rented</span>`;
+}
+function branchBadge(city, name) {
+    const cls = city==='Istanbul' ? 'b-ist' : 'b-ank';
+    return `<span class="badge ${cls}">📍 ${city}</span>`;
+}
+
+// ─── Stats ───────────────────────────────────────────────────
+async function updateStats(cars) {
+    document.getElementById('stTotal').textContent  = cars.length;
+    const avail  = cars.filter(c=>c.status==='available').length;
+    const rented = cars.filter(c=>c.status==='rented').length;
+    document.getElementById('stAvail').textContent  = avail;
+    document.getElementById('stRented').textContent = rented;
+
+    try {
+        // Kasaya girecek parayı kiralamalar (rentals) tablosundaki 'total_price' alanlarının toplamından çekiyoruz
+        const res = await fetch('/api/rentals', { headers: hAuth() });
+        if (res.ok) {
+            const rentals = await res.json();
+            // İptal edilmemiş (active ve completed) kiralamaların ücretlerini topluyoruz
+            const totalRevenue = rentals
+                .filter(r => r.status !== 'cancelled')
+                .reduce((sum, r) => sum + Number(r.total_price), 0);
+            
+            document.getElementById('stRevenue').textContent = '$' + totalRevenue.toLocaleString('en-US');
+        }
+    } catch (e) {
+        document.getElementById('stRevenue').textContent = '$0';
+    }
+}
+
+// ─── Search & Filters ────────────────────────────────────────
+function onSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(()=>{
+        currentFilters.search = document.getElementById('searchInput').value.trim();
+        loadCars(currentFilters);
+    }, 300);
+}
+
+function applyFilters() {
+    // Kutulardan gelen değerleri tam sayıya çeviriyoruz, boşsa null bırakıyoruz
+    const branchVal = document.getElementById('cfBranch').value;
+    const categoryVal = document.getElementById('cfCategory').value;
+
+    currentFilters = {
+        fuel_type:   document.getElementById('cfFuel').value,
+        branch_id:   branchVal ? Number(branchVal) : '',
+        category_id: categoryVal ? Number(categoryVal) : '',
+        status:      document.getElementById('cfStatus').value,
+        sort:        document.getElementById('cfSort').value,
+        search:      document.getElementById('searchInput').value.trim(),
+    };
+    
+    // Boş filtre parametrelerini temizle
+    Object.keys(currentFilters).forEach(k => { if (!currentFilters[k]) delete currentFilters[k]; });
+    
+    // Filtreleri backend'e gönder
+    loadCars(currentFilters); 
+}
+
+function resetFilters() {
+    ['cfFuel','cfBranch','cfCategory','cfStatus','cfSort'].forEach(id=>document.getElementById(id).value='');
+    currentFilters={};
+    loadCars();
+}
+
+// ─── Admin: Add / Edit / Delete Car ──────────────────────────
+async function submitCar() {
+    if (!validateCarForm()) return;
+    const id = document.getElementById('editId').value;
+    
+    const branchVal = document.getElementById('fBranch').value;
+    const categoryVal = document.getElementById('fCategory').value;
+
+    const payload = {
+        brand:         v('fBrand'), 
+        model:         v('fModel'),
+        year:          Number(v('fYear')),
+        price_per_day: Number(v('fPrice')),
+        km:            Number(v('fKm')),
+        fuel_type:     v('fFuel'),
+        status:        document.getElementById('fStatus').value, // DURUM VERİSİ EKLENDİ
+        branch_id:     branchVal ? Number(branchVal) : null,
+        category_id:   categoryVal ? Number(categoryVal) : null
+    };
+
+    const url    = id ? `/api/cars/${id}` : '/api/cars';
+    const method = id ? 'PUT' : 'POST';
+    try {
+        const res  = await fetch(url,{method,headers:hAuth(),body:JSON.stringify(payload)});
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        toast(id ? 'Vehicle updated ✓' : 'Vehicle added ✓');
+        resetForm(); 
+        loadCars(); 
+    } catch(e) { toast(e.message, true); }
+}
+async function startEdit(id) {
+    const car = await api(`/api/cars/${id}`);
+    document.getElementById('editId').value   = id;
+    document.getElementById('fBrand').value   = car.brand;
+    document.getElementById('fModel').value   = car.model;
+    document.getElementById('fYear').value    = car.year;
+    document.getElementById('fPrice').value   = car.price_per_day;
+    document.getElementById('fKm').value      = car.km;
+    document.getElementById('fFuel').value    = car.fuel_type;
+    document.getElementById('fBranch').value  = car.branch_id;
+    document.getElementById('fCategory').value= car.category_id;
+    document.getElementById('fStatus').value  = car.status || 'available'; // ARTIK DURUMU DA FORMA DOLDURUYOR
+    document.getElementById('formLabel').textContent      = 'Edit Vehicle';
+    document.getElementById('editBannerText').textContent = `#${id} — ${car.brand} ${car.model}`;
+    document.getElementById('editBanner').classList.add('show');
+    document.getElementById('cancelEditBtn').classList.add('show');
+    document.getElementById('submitIcon').textContent = '✓';
+    document.getElementById('submitText').textContent = 'Update Vehicle';
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+async function deleteCar(id) {
+    if (!confirm('Delete this vehicle permanently?')) return;
+    try {
+        const res  = await fetch(`/api/cars/${id}`,{method:'DELETE',headers:hAuth()});
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        toast('Vehicle deleted'); loadCars();
+    } catch(e) { toast(e.message,true); }
+}
+
+function resetForm() {
+    ['editId','fBrand','fModel','fYear','fPrice','fKm'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('fFuel').value    = '';
+    document.getElementById('fBranch').value  = '';
+    document.getElementById('fCategory').value= '';
+    document.getElementById('fStatus').value  = 'available'; // ARTIK SIFIRLARKEN DURUMU DA MUTLAK SURETLE AVAILABLE YAPIYOR
+    ['fe-brand','fe-model','fe-year','fe-price','fe-km','fe-fuel','fe-branch','fe-category']
+        .forEach(id=>document.getElementById(id).textContent='');
+    ['fBrand','fModel','fYear','fPrice','fKm','fFuel','fBranch','fCategory']
+        .forEach(id=>document.getElementById(id).classList.remove('err'));
+    document.getElementById('formLabel').textContent  = 'Add New Vehicle';
+    document.getElementById('editBanner').classList.remove('show');
+    document.getElementById('cancelEditBtn').classList.remove('show');
+    document.getElementById('submitIcon').textContent = '＋';
+    document.getElementById('submitText').textContent = 'Add Vehicle';
+}
+
+function validateCarForm() {
+    let ok=true;
+    const checks=[
+        ['fBrand','fe-brand','Brand is required'],
+        ['fModel','fe-model','Model is required'],
+        ['fFuel', 'fe-fuel', 'Fuel type is required'],
+        ['fBranch','fe-branch','Branch is required'],
+        ['fCategory','fe-category','Category is required'],
+    ];
+    checks.forEach(([fid,eid,msg])=>{
+        const val=document.getElementById(fid).value.trim();
+        document.getElementById(eid).textContent = val?'':msg;
+        document.getElementById(fid).classList.toggle('err',!val);
+        if(!val) ok=false;
+    });
+    const year=Number(v('fYear'));
+    const validYear = !isNaN(year)&&year>=1900&&year<=2026;
+    document.getElementById('fe-year').textContent = validYear?'':'Valid year required (1900–2026)';
+    document.getElementById('fYear').classList.toggle('err',!validYear);
+    if(!validYear) ok=false;
+
+    const price=Number(v('fPrice'));
+    const validPrice = !isNaN(price)&&price>0;
+    document.getElementById('fe-price').textContent = validPrice?'':'Positive price required';
+    document.getElementById('fPrice').classList.toggle('err',!validPrice);
+    if(!validPrice) ok=false;
+
+    const km=Number(v('fKm'));
+    const validKm = v('fKm')!==''&&!isNaN(km)&&km>=0;
+    document.getElementById('fe-km').textContent = validKm?'':'KM must be 0 or more';
+    document.getElementById('fKm').classList.toggle('err',!validKm);
+    if(!validKm) ok=false;
+
+    return ok;
+}
+
+// ─── Rental Modal ────────────────────────────────────────────
+function openRentalModal(carId, carLabel, pricePerDay) {
+    RENTAL_CAR = {id:carId, label:carLabel, price:pricePerDay};
+    document.getElementById('modalCarInfo').textContent = carLabel + ` — $${pricePerDay}/day`;
+    document.getElementById('mStart').value='';
+    document.getElementById('mEnd').value='';
+    document.getElementById('pricePreview').textContent='—';
+    document.getElementById('daysLabel').textContent='Select dates';
+    document.getElementById('me-start').textContent='';
+    document.getElementById('me-end').textContent='';
+    // Set min date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('mStart').min = today;
+    document.getElementById('mEnd').min   = today;
+    document.getElementById('rentalModal').classList.add('show');
+}
+
+function closeRentalModal() {
+    document.getElementById('rentalModal').classList.remove('show');
+    RENTAL_CAR=null;
+}
+
+// Live price preview
+document.addEventListener('DOMContentLoaded', ()=>{
+    ['mStart','mEnd'].forEach(id=>{
+        document.getElementById(id).addEventListener('change', updatePricePreview);
+    });
+});
+
+function updatePricePreview() {
+    const s=document.getElementById('mStart').value, e=document.getElementById('mEnd').value;
+    if (s && e && new Date(e)>new Date(s) && RENTAL_CAR) {
+        const days = Math.ceil((new Date(e)-new Date(s))/(86400000));
+        const total = days * RENTAL_CAR.price;
+        document.getElementById('pricePreview').textContent = `$${total.toLocaleString('en-US',{minimumFractionDigits:2})}`;
+        document.getElementById('daysLabel').textContent = `${days} day${days>1?'s':''}`;
+    } else {
+        document.getElementById('pricePreview').textContent='—';
+        document.getElementById('daysLabel').textContent='Select dates';
+    }
+}
+
+async function confirmRental() {
+    const start=document.getElementById('mStart').value;
+    const end  =document.getElementById('mEnd').value;
+    const pu   =document.getElementById('mPickup').value;
+    const ret  =document.getElementById('mReturn').value;
+    let ok=true;
+    document.getElementById('me-start').textContent = start?'':'Start date required';
+    document.getElementById('me-end').textContent   = end  ?'':'End date required';
+    if(!start||!end||new Date(end)<=new Date(start)){
+        if(start&&end) document.getElementById('me-end').textContent='End must be after start';
+        ok=false;
+    }
+    if(!ok) return;
+
+    try {
+        const res  = await fetch('/api/rentals',{method:'POST',headers:hAuth(),body:JSON.stringify({
+            car_id:RENTAL_CAR.id, pickup_branch_id:Number(pu),
+            return_branch_id:Number(ret), start_date:start, end_date:end
+        })});
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        closeRentalModal();
+        toast('Rental confirmed! ✓');
+        loadCars(currentFilters);
+        loadMyRentals();
+    } catch(e) { toast(e.message,true); }
+}
+
+// ─── My Rentals (customer sidebar) ───────────────────────────
+async function loadMyRentals() {
+    const list = document.getElementById('myRentalsList');
+    try {
+        const rentals = await api('/api/rentals', true);
+        if (!rentals.length) { list.textContent='No rentals yet.'; return; }
+        list.innerHTML = rentals.slice(0,5).map(r=>`
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
+              <div style="font-weight:600;font-size:0.82rem">${esc(r.brand)} ${esc(r.model)}</div>
+              <div style="color:var(--muted2);font-size:0.74rem;margin-top:3px">${formatDateDMY(r.start_date)} → ${formatDateDMY(r.end_date)}</div>
+              <div style="margin-top:4px;display:flex;justify-content:space-between;align-items:center">
+                <span style="color:var(--green);font-weight:700;font-size:0.82rem">$${Number(r.total_price).toLocaleString()}</span>
+                ${rentalStatusBadge(r.status)}
+              </div>
+            </div>
+        `).join('');
+    } catch { list.textContent='Could not load rentals.'; }
+}
+
+function rentalStatusBadge(s) {
+    const map={active:'var(--blue)',completed:'var(--green)',cancelled:'var(--muted2)'};
+    return `<span style="font-size:0.7rem;color:${map[s]||'#fff'};font-weight:600">${s.toUpperCase()}</span>`;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────
+function populateSelect(id, items, valKey, labelKey, withAll=false) {
+    const sel = document.getElementById(id);
+    sel.innerHTML = (withAll?'<option value="">All</option>':'<option value="">Select...</option>')
+        + items.map(i=>`<option value="${i[valKey]}">${esc(String(i[labelKey]))}</option>`).join('');
+}
+
+function populateModalBranches() {
+    ['mPickup','mReturn'].forEach(id=>{
+        const sel = document.getElementById(id);
+        sel.innerHTML = BRANCHES.map(b=>`<option value="${b.id}">${esc(b.name)} (${esc(b.city)})</option>`).join('');
+    });
+}
+
+async function api(url, auth=false) {
+    // Eğer auth true ise veya urun içinde /api/cars geçiyorsa istek her türlü token taşımalıdır
+    const opts = (auth || url.includes('/api/cars')) ? { headers: hAuth() } : {};
+    const res  = await fetch(url, opts);
+    if (!res.ok) { const d=await res.json(); throw new Error(d.error||'API error'); }
+    return res.json();
+}
+
+function h()     { return {'Content-Type':'application/json'}; }
+function hAuth() { return {'Content-Type':'application/json','Authorization':'Bearer '+TOKEN}; }
+function v(id)   { return document.getElementById(id).value.trim(); }
+function esc(s)  { return String(s).replace(/['"<>&]/g,c=>({'\'':'&#39;','"':'&quot;','<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+
+function setFE(errId, inputId, msg) {
+    document.getElementById(errId).textContent=msg;
+    document.getElementById(inputId).classList.add('err');
+}
+
+let toastTimer;
+function toast(msg, isErr=false) {
+    const el=document.getElementById('toast');
+    document.getElementById('tmsg').textContent=msg;
+    document.getElementById('ticon').textContent=isErr?'✕':'✓';
+    el.className='show'+(isErr?' terror':'');
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+// YYYY-MM-DD 
+function formatDateDMY(dateStr) {
+    if (!dateStr) return '—';
+    
+    const cleanDate = dateStr.split('T')[0];
+    const [year, month, day] = cleanDate.split('-');
+    return `${day}.${month}.${year}`;
+}
+
+</script>
+</body>
+</html>
