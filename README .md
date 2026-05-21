@@ -50,7 +50,6 @@ This project was built for the System Analysis and Design course. The requiremen
 | Frontend | Vanilla JavaScript, HTML, CSS |
 | Backend | Node.js + Express.js |
 | Database | MySQL |
-| Authentication | JWT (JSON Web Tokens) |
 | API Documentation | Swagger / OpenAPI 3.0 |
 | Testing | Jest |
 
