@@ -8,7 +8,6 @@
 ![Node.js](https://img.shields.io/badge/Node.js-Express-236143?style=for-the-badge&logo=node.js&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-Database-2356A4?style=for-the-badge&logo=mysql&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-Frontend-B4772A?style=for-the-badge&logo=javascript&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-Authentication-17211A?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
 ![Jest](https://img.shields.io/badge/Jest-Tests-B73B3B?style=for-the-badge&logo=jest&logoColor=white)
 ![Swagger](https://img.shields.io/badge/Swagger-API%20Docs-2385C5?style=for-the-badge&logo=swagger&logoColor=white)
 
