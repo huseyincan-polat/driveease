@@ -1,8 +1,20 @@
+<div align="center">
+
 # 🚗 DriveEase — Car Rental Management System
 
 > **Course:** System Analysis and Design — Spring 2026  
-> **Student:** [Hüseyin Can Polat -220303047]
+> **Student:** Hüseyin Can Polat — 220303047
 
+![Node.js](https://img.shields.io/badge/Node.js-Express-236143?style=for-the-badge&logo=node.js&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-Database-2356A4?style=for-the-badge&logo=mysql&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-Frontend-B4772A?style=for-the-badge&logo=javascript&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-Authentication-17211A?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
+![Jest](https://img.shields.io/badge/Jest-Tests-B73B3B?style=for-the-badge&logo=jest&logoColor=white)
+![Swagger](https://img.shields.io/badge/Swagger-API%20Docs-2385C5?style=for-the-badge&logo=swagger&logoColor=white)
+
+</div>
+
+---
 
 ## 📌 What Was Asked of Me?
 
@@ -23,7 +35,7 @@ This project was built for the System Analysis and Design course. The requiremen
 
 ## 🎯 What Did I Build?
 
-I built **DriveEase**, a car rental management platform with two user roles:
+**DriveEase** is a car rental management platform with two user roles:
 
 | Role | What they can do |
 |------|-----------------|
@@ -51,8 +63,8 @@ I built **DriveEase**, a car rental management platform with two user roles:
 systemanalysis/
 ├── backend/
 │   ├── config/
-│   │   └── db.js                  # MySQL bağlantısı
-│   ├── controllers/               # HTTP isteklerini karşılar
+│   │   └── db.js                  # MySQL connection
+│   ├── controllers/               # Handle HTTP requests
 │   │   ├── authController.js
 │   │   ├── carController.js
 │   │   ├── categoryController.js
@@ -60,15 +72,15 @@ systemanalysis/
 │   │   ├── rentalController.js
 │   │   └── userController.js
 │   ├── middleware/
-│   │   └── auth.js                # JWT doğrulama
-│   ├── routes/                    # API rotaları
+│   │   └── auth.js                # JWT verification
+│   ├── routes/                    # API route definitions
 │   │   ├── authRoutes.js
 │   │   ├── carRoutes.js
 │   │   ├── categoryRoutes.js
 │   │   ├── branchRoutes.js
 │   │   ├── rentalRoutes.js
 │   │   └── userRoutes.js
-│   ├── services/                  # İş mantığı burada (route'larda değil!)
+│   ├── services/                  # Business logic (not in routes!)
 │   │   ├── carService.js
 │   │   ├── rentalService.js
 │   │   └── userService.js
@@ -76,9 +88,9 @@ systemanalysis/
 │       ├── carService.test.js
 │       └── userAndRentalService.test.js
 ├── frontend/
-│   └── index.html                 # Tek sayfalık uygulama (SPA)
-├── app.js                         # Sunucu giriş noktası
-├── swagger.js                     # Swagger yapılandırması
+│   └── index.html                 # Single-page application (SPA)
+├── app.js                         # Entry point
+├── swagger.js
 ├── package.json
 └── README.md
 ```
@@ -90,31 +102,30 @@ systemanalysis/
 
 ---
 
-## 🚀 How to Run This Project
+## 🚀 Getting Started
 
-### Step 1 — Install Prerequisites
+### 1. Install Prerequisites
 
-Make sure you have these installed on your machine:
 - [Node.js](https://nodejs.org/) v18 or higher
 - [MySQL](https://www.mysql.com/) v8 or higher
 - Git
 
-### Step 2 — Clone the Repository
+### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/driveease.git
+git clone https://github.com/huseyincan-polat/driveease.git
 cd driveease
 ```
 
-### Step 3 — Install Dependencies
+### 3. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### Step 4 — Create the `.env` File
+### 4. Create the `.env` File
 
-Create a file named `.env` in the root folder (next to `app.js`) and paste:
+Create a file named `.env` in the root folder and paste:
 
 ```env
 DB_HOST=localhost
@@ -127,7 +138,7 @@ PORT=3000
 
 > ⚠️ Replace `your_mysql_password` with your actual MySQL password!
 
-### Step 5 — Set Up the Database
+### 5. Set Up the Database
 
 Open MySQL Workbench and run:
 
@@ -189,15 +200,15 @@ CREATE TABLE rentals (
 );
 ```
 
-### Step 6 — Create an Admin Account
+### 6. Create an Admin Account
 
-First register through the app, then promote your account in MySQL:
+Register through the app first, then run:
 
 ```sql
 UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
 ```
 
-### Step 7 — Start the Server
+### 7. Start the Server
 
 ```bash
 node app.js
@@ -207,11 +218,20 @@ Open your browser → **http://localhost:3000** 🎉
 
 ---
 
+## Useful Commands
+
+| Command | Description |
+|---------|-------------|
+| `node app.js` | Start the server |
+| `npm test` | Run Jest unit tests |
+
+---
+
 ## 📖 API Documentation
 
 Interactive Swagger UI → **http://localhost:3000/api-docs**
 
-All endpoints can be tested directly from the browser. Click **Authorize** and paste your JWT token to test protected routes.
+Click **Authorize** and paste your JWT token to test protected routes.
 
 ### Full Endpoint List
 
@@ -244,9 +264,9 @@ Tests use **Jest** and only test the **service layer** — not the routes.
 This follows the course requirement: business logic must be separately testable.
 
 ```
-✅ carService — validateCar()       → 14 tests
-✅ userService — validateRegister() → 4 tests
-✅ rentalService — base controls    → 1 test
+✅ carService — validateCar()          → 13 tests
+✅ userService — Password Validation   → 1 test
+✅ rentalService — Component Integration → 1 test
 ```
 
 ---
@@ -260,7 +280,7 @@ This follows the course requirement: business logic must be separately testable.
 | Vanilla JS frontend (no frameworks) | ✅ Pure HTML + JS SPA |
 | Business logic separated from routes | ✅ `/services` layer |
 | Input validation (frontend + backend) | ✅ Both layers |
-| Unit tests | ✅ Jest, 19 tests |
+| Unit tests | ✅ Jest, 15 tests |
 | Swagger documentation | ✅ `/api-docs` |
 | README | ✅ This file |
-| Git & GitHub | ✅ Regular commits |
+| Git & GitHub | ✅ [huseyincan-polat/driveease](https://github.com/huseyincan-polat/driveease) |
